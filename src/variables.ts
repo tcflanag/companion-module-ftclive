@@ -25,6 +25,7 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 			variableId: isChild ? `d${e.division}_match_status` : `match_status`,
 			name: isChild ? `D${e.division} Match Status` : `Match Status`,
 		})
+		
 		for (let i = 1; i <= e.fieldCount; i++) {
 			definitions.push({
 				variableId: isChild ? `d${e.division}_f${i}_match_name` : `f${i}_match_name`,
@@ -33,6 +34,10 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 			definitions.push({
 				variableId: isChild ? `d${e.division}_f${i}_match_status` : `f${i}_match_status`,
 				name: isChild ? `D${e.division} Field ${i} Match Status` : `Field ${i} Match Status`,
+			})
+			definitions.push({
+				variableId: isChild ? `d${e.division}_match_title` : `match_title`,
+				name: isChild ? `D${e.division} Match Title` : `Match Title`,
 			})
 		}
 	})

@@ -10,8 +10,9 @@ export function createFtcLiveWebSocketClient(
 	onConnectionChange: (isConnected: boolean) => void,
 	onMessage: (message: ApiV2Update) => void,
 ): WebSocket {
-	const url = `ws://${host}:${port}/api/v2/stream/?code=${eventCode}`
-
+	// const url = `ws://${host}:${port}/api/v2/stream/?code=${eventCode}`
+	
+	const url = `ws://${host}:${port}/stream/display/command/?code=${eventCode}`
 	// Create a new WebSocket connection
 	const ws = pws(url, WebSocket, { pingTimeout: 15 * 1000 })
 	ws.onopen = () => {

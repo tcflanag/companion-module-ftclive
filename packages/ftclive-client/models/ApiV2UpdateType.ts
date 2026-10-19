@@ -14,11 +14,12 @@ import { HttpFile } from '../http/http.js';
 
 export enum ApiV2UpdateType {
     MatchLoad = 'MATCH_LOAD',
-    MatchStart = 'MATCH_START',
-    MatchAbort = 'MATCH_ABORT',
+    MatchStart = 'START_MATCH',
+    MatchAbort = 'ABORT_MATCH',
     MatchCommit = 'MATCH_COMMIT',
     MatchPost = 'MATCH_POST',
     ShowPreview = 'SHOW_PREVIEW',
     ShowMatch = 'SHOW_MATCH',
-    InitSubmitted = 'INIT_SUBMITTED'
+    InitSubmitted = 'INIT_SUBMITTED',
+	ShowRandom = 'SHOW_RANDOM'
 }

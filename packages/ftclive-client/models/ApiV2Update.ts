@@ -17,7 +17,11 @@ import { HttpFile } from '../http/http.js';
 export class ApiV2Update {
     'updateTime': number;
     'updateType'?: ApiV2UpdateType;
+	'type'?: ApiV2UpdateType;
+	'init'?: boolean;
     'payload'?: ApiV2UpdateMatchPayload;
+	'params'?:any;
+	'field'?:any;
 
     static readonly discriminator: string | undefined = undefined;
 

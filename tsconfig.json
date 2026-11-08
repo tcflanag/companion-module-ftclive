@@ -1,8 +1,10 @@
 {
-	"extends": "./tsconfig.build.json",
-	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules/**"],
-	"compilerOptions": {
-		"types": ["node"]
-	}
+  "extends": "@companion-module/tools/tsconfig/node22/recommended-esm.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules/**", "src/**/*spec.ts"]
 }

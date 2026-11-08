@@ -1,22 +1,38 @@
 import type { ModuleInstance } from './main.js'
-
+//$(dataentry:entry_last)
+//$(ftclive:eventList)[$(page:eventID)]
 export function UpdateActions(self: ModuleInstance): void {
 	self.setActionDefinitions({
-		sample_action: {
-			name: 'My First Action',
+		setEvent: {
+			name: 'Set Event ID',
 			options: [
 				{
-					id: 'num',
-					type: 'number',
-					label: 'Test',
-					default: 5,
-					min: 0,
-					max: 100,
+					id: 'eventID',
+					type: 'textinput',
+					label: 'Event ID',
+					default: "",
+					useVariables: true, 
+				},
+				{
+					id: 'serverIP',
+					type: 'textinput',
+					label: 'Server IP',
+					default: "",
+					//regex: Regex.IP,
+					useVariables: true, 
 				},
 			],
-			callback: async (event) => {
-				console.log('Hello world!', event.options.num)
+			callback: (event) => {
+		        
+				self.config.event = String(event.options.eventID);
+				self.config.host = String(event.options.serverIP);
+
+				
+				self.saveConfig.call(self, self.config, undefined);
+				self.init(self.config)
+				console.log(self.config)
 			},
 		},
+
 	})
 }

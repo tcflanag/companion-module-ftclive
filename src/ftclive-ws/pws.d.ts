@@ -13,5 +13,5 @@ declare module 'pws' {
 	function pws(url: string, protocols: string | string[], options?: PwsOptions): WebSocket
 	function pws(url: string, webSocket: typeof WebSocket, options?: PwsOptions): WebSocket
 	function pws(url: string, options?: PwsOptions): WebSocket
-	export = pws
+	export default pws
 }

@@ -5,6 +5,8 @@ export interface ModuleConfig {
 	host: string
 	port: number
 	event: string
+	title_format: string
+	[key: string]: any; 
 }
 
 export function GetConfigFields(self: ModuleInstance): SomeCompanionConfigField[] {
@@ -41,6 +43,32 @@ export function GetConfigFields(self: ModuleInstance): SomeCompanionConfigField[
 					label: e,
 				})),
 			],
+		},
+		{
+			type: 'dropdown',
+			id: 'title_format',
+			label: 'Title Format',
+			default: 'plain_num',
+			width: 20,
+			choices: [
+				{
+					id: 'plain_num',
+					label: 'Red:xxx,yyy Blue:aaa,bbb',
+				},
+				{
+					id: 'color_num',
+					label: '🔴:xxx,yyy 🔵:aaa,bbb',
+				},
+				{
+					id: 'plain_name',
+					label: 'Red: Name1,Name2 Blue:Name3,Name4',
+				},
+				{
+					id: 'color_name',
+					label: '🔴:Name1,Name2 🔵:Name3,Name4',
+				},
+				
+			]
 		},
 	]
 }

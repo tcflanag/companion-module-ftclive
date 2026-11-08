@@ -1,4 +1,4 @@
-import { InstanceBase, runEntrypoint, InstanceStatus, SomeCompanionConfigField } from '@companion-module/base'
+import { InstanceBase,InstanceStatus, SomeCompanionConfigField      } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
 import { UpdateVariableDefinitions } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
@@ -19,7 +19,16 @@ export async function checkServer(host: string, port: number): Promise<boolean> 
 	}
 }
 
-export class ModuleInstance extends InstanceBase<ModuleConfig> {
+export interface MyModuleTypes {
+	config: ModuleConfig
+	secrets: undefined
+	actions: any
+	feedbacks: any
+	variables: any
+}
+
+
+export class ModuleInstance extends InstanceBase<MyModuleTypes> {
 	config!: ModuleConfig // Setup in init()
 	eventList: string[] = []
 	apiClientV1?: APIV1Api
@@ -34,12 +43,15 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	async init(config: ModuleConfig): Promise<void> {
+		console.log("Init",config)
 		this.config = config
-
+		console.log("a")
 		void this.configUpdated(config)
-
+		console.log("B")
 		this.updateActions() // export actions
+		console.log("C")
 		this.updateFeedbacks() // export feedbacks
+		console.log("D")
 		this.updateVariableDefinitions() // export variable definitions
 	}
 	// When module gets deleted
@@ -57,7 +69,10 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		this.apiClientV1 = new APIV1Api(
 			createConfiguration({ baseServer: new ServerConfiguration(`http://${config.host}:${config.port}`, {}) }),
 		)
+		console.log("Connected")
 		this.eventList = (await this.apiClientV1.getEvents()).eventCodes!
+		this.updateVariableDefinitions() // Store the eventList immediately, so it's externally visible
+		console.log("New list", this.eventList)
 		if (this.config.event) {
 			try {
 				const eventCode = this.config.event
@@ -105,37 +120,58 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 								}
 							},
 							(update) => {
-								switch (update.updateType) {
+								this.log('debug', `Received update for event ${eventCode}: ${JSON.stringify(update)}`)
+								if (update.init == true) {
+									return;
+								}
+								switch (update.type) {
 									case ApiV2UpdateType.ShowPreview:
+										var title_text = "";
+										console.log("format",this.config.title_format)
+										if (this.config.title_format == 'plain_num'){
+												title_text = `Red:${update.params?.red.teams[0].number},${update.params?.red.teams[1].number} Blue:${update.params?.blue.teams[0].number},${update.params?.blue.teams[1].number}`
+												
+											}
+											else if (this.config.title_format == 'color_num'){
+												title_text = `🔴:${update.params?.red.teams[0].number},${update.params?.red.teams[1].number} 🔵:${update.params?.blue.teams[0].number},${update.params?.blue.teams[1].number}`
+												
+											}
 										this.setVariableValues({
-											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
-											[`${varPrefix}f${update.payload?.field}_match_status`]: 'preview',
-											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}f${update.field}_match_name`]: update.params?.matchName,
+											[`${varPrefix}f${update.field}_match_status`]: 'preview',
+											[`${varPrefix}match_name`]: update.params?.matchName,
 											[`${varPrefix}match_status`]: 'preview',
+											[`${varPrefix}match_title`]:title_text,
+											[`${varPrefix}active_field`]:update.field
+											
+											
 										})
 										break
 									case ApiV2UpdateType.ShowMatch:
 										this.setVariableValues({
-											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
-											[`${varPrefix}f${update.payload?.field}_match_status`]: 'prematch',
-											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}f${update.field}_match_name`]: update.params?.matchName,
+											[`${varPrefix}f${update.field}_match_status`]: 'prematch',
+											[`${varPrefix}match_name`]: update.params?.matchName,
 											[`${varPrefix}match_status`]: 'prematch',
+											[`${varPrefix}active_field`]:update.field
+											
 										})
 										break
 									case ApiV2UpdateType.MatchStart:
 										// TODO timer variables maybe
 										this.setVariableValues({
-											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
-											[`${varPrefix}f${update.payload?.field}_match_status`]: 'auto',
-											[`${varPrefix}match_name`]: update.payload?.shortName,
-											[`${varPrefix}match_status`]: 'auto',
+											[`${varPrefix}f${update.field}_match_name`]: update.params?.matchName,
+											[`${varPrefix}f${update.field}_match_status`]: 'run',
+											[`${varPrefix}match_name`]: update.params?.matchName,
+											[`${varPrefix}match_status`]: 'run',
+											[`${varPrefix}active_field`]:update.field
 										})
-										// Don't love the timing living here, but this works for the moment
+										/*// Don't love the timing living here, but this works for the moment
 										this.timeouts.push(
 											setTimeout(
 												() =>
 													this.setVariableValues({
-														[`${varPrefix}f${update.payload?.field}_match_status`]: 'transition',
+														[`${varPrefix}f${update.field}_match_status`]: 'transition',
 														[`${varPrefix}match_status`]: 'transition',
 													}),
 												30 * 1000,
@@ -145,7 +181,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 											setTimeout(
 												() =>
 													this.setVariableValues({
-														[`${varPrefix}f${update.payload?.field}_match_status`]: 'teleop',
+														[`${varPrefix}f${update.field}_match_status`]: 'teleop',
 														[`${varPrefix}match_status`]: 'teleop',
 													}),
 												(30 + 8) * 1000,
@@ -155,35 +191,40 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 											setTimeout(
 												() =>
 													this.setVariableValues({
-														[`${varPrefix}f${update.payload?.field}_match_status`]: 'done',
+														[`${varPrefix}f${update.field}_match_status`]: 'done',
 														[`${varPrefix}match_status`]: 'done',
 													}),
 												(30 + 8 + 120) * 1000,
 											),
-										)
+										)*/
 										break
 									case ApiV2UpdateType.MatchAbort:
 										this.timeouts.forEach((t) => clearTimeout(t))
 										this.timeouts = []
 										this.setVariableValues({
-											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
-											[`${varPrefix}f${update.payload?.field}_match_status`]: 'aborted',
-											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}f${update.field}_match_name`]: update.params?.matchName,
+											[`${varPrefix}f${update.field}_match_status`]: 'aborted',
+											[`${varPrefix}match_name`]: update.params?.matchName,
 											[`${varPrefix}match_status`]: 'aborted',
+											[`${varPrefix}active_field`]:update.field
 										})
 										break
 									case ApiV2UpdateType.MatchPost:
 										this.setVariableValues({
-											[`${varPrefix}f${update.payload?.field}_match_name`]: update.payload?.shortName,
-											[`${varPrefix}f${update.payload?.field}_match_status`]: 'post',
-											[`${varPrefix}match_name`]: update.payload?.shortName,
+											[`${varPrefix}f${update.field}_match_name`]: update.params?.matchName,
+											[`${varPrefix}f${update.field}_match_status`]: 'post',
+											[`${varPrefix}match_name`]: update.params?.matchName,
 											[`${varPrefix}match_status`]: 'post',
+											[`${varPrefix}active_field`]:update.field
 										})
 										break
 								}
-								this.log('debug', `Received update for event ${eventCode}: ${JSON.stringify(update)}`)
+								
 							},
 						)
+					}
+					else {
+						this.updateStatus(InstanceStatus.Ok)
 					}
 				})
 			} catch (e) {
@@ -213,4 +254,5 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 }
 
-runEntrypoint(ModuleInstance, UpgradeScripts)
+
+export default ModuleInstance;

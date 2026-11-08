@@ -39,6 +39,17 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 			}
 		}
 	})
+
+	definitions['eventList'] = {
+		name: `Events on Score System`,
+	}
+	values['eventList'] = self.eventList // 'as any' can be removed if types map matches
+
+	definitions['ipaddress'] = {
+		name: `IP Address`,
+	}
+	values['ipaddress'] = self.config.host
+
 	self.setVariableDefinitions(definitions)
 	self.setVariableValues(values)
 }
